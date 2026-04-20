@@ -25,7 +25,7 @@
       overflow: hidden;
       height: 100vh;
       width: 100vw;
-      position: fixed; /* Prevent pull-to-refresh */
+      position: fixed;
     }
 
     /* --- Loading --- */
@@ -39,21 +39,21 @@
     .loader-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.3s; box-shadow: 0 0 10px var(--accent); }
 
     /* --- App Layout --- */
-    #app { position: relative; width: 100%; height: 100%; opacity: 0; transition: opacity 0.5s; display: flex; flex-direction: column; }
+    #app { position: relative; width: 100%; height: 100%; opacity: 0; transition: opacity 0.5s; }
     #app.visible { opacity: 1; }
-    
-    #canvas-container { position: relative; flex-grow: 1; background: #000; overflow: hidden; }
+    #canvas-container { position: relative; height: 100%; width: 100%; background: #000; overflow: hidden; }
     canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
     
-    /* REMOVED DARK EFFECTS - High Visibility */
-    #video-canvas { 
-      opacity: 1.0; 
-      filter: contrast(1.05) brightness(1.05); 
-    }
+    /* Clear Visibility Camera */
+    #video-canvas { opacity: 1.0; filter: contrast(1.05) brightness(1.05); }
     #webcam { display: none; }
 
-    /* --- HUD --- */
-    #hud { position: absolute; top: 16px; left: 16px; z-index: 50; }
+    /* --- Top HUD Layout --- */
+    .top-hud {
+      position: absolute; top: 16px; left: 0; right: 0;
+      padding: 0 16px; display: flex; justify-content: space-between; align-items: center;
+      pointer-events: none; z-index: 50;
+    }
     .badge { 
         background: var(--glass); border: 1px solid var(--border); padding: 8px 16px; 
         border-radius: 12px; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(8px);
@@ -62,69 +62,61 @@
     .dot.active { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
     .label { font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
 
-    /* --- Responsive Toolbar --- */
-    #toolbar {
-      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-      background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border);
-      padding: 10px 14px; border-radius: 24px; display: flex; 
-      align-items: center; justify-content: center; gap: 12px; z-index: 100; width: auto; max-width: 95%;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-    .color-grid { display: flex; gap: 8px; overflow-x: auto; padding: 4px; scrollbar-width: none; }
-    .color-grid::-webkit-scrollbar { display: none; }
-    
-    .color-dot { 
-        flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); 
-        cursor: pointer; transition: 0.2s; 
-    }
-    .color-dot.active { border-color: white; transform: scale(1.15); box-shadow: 0 0 12px currentColor; }
-    
-    .action-group { display: flex; gap: 8px; border-left: 1px solid var(--border); padding-left: 12px; }
+    /* Moving Settings to Top Right */
+    .hud-controls { display: flex; gap: 8px; pointer-events: auto; }
     .icon-btn { 
-      background: rgba(255,255,255,0.1); border: none; color: white; width: 40px; height: 40px; 
-      border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+      background: var(--glass); border: 1px solid var(--border); color: white; width: 44px; height: 44px; 
+      border-radius: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+      backdrop-filter: blur(8px); transition: 0.2s;
+    }
+    .icon-btn:active { transform: scale(0.9); }
+
+    /* --- Bottom Action Bar --- */
+    #toolbar {
+      position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 12px; z-index: 100; pointer-events: auto;
     }
 
     /* --- Settings Modal --- */
     #settings-modal {
       position: fixed; inset: 0; z-index: 200;
-      background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(12px);
       display: flex; align-items: center; justify-content: center;
       opacity: 0; pointer-events: none; transition: 0.3s; padding: 20px;
     }
     #settings-modal.open { opacity: 1; pointer-events: auto; }
     .settings-box {
       background: var(--bg-surface); border: 1px solid var(--border);
-      padding: 24px; border-radius: 28px; width: 100%; max-width: 340px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      padding: 28px; border-radius: 32px; width: 100%; max-width: 360px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.6);
     }
+    .settings-box h3 { margin-bottom: 24px; font-family: 'Outfit'; font-size: 22px; }
+
+    /* Color Grid inside Settings */
+    .setting-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; color: var(--accent); font-weight: 700; }
+    .color-grid { 
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; 
+        background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px;
+    }
+    .color-dot { 
+        width: 100%; aspect-ratio: 1; border-radius: 12px; border: 2px solid transparent; 
+        cursor: pointer; transition: 0.2s; box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+    }
+    .color-dot.active { border-color: white; transform: scale(1.1); box-shadow: 0 0 15px currentColor; }
+    
     .setting-row { margin-bottom: 20px; }
     .setting-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 12px; opacity: 0.7; }
     input[type=range] { width: 100%; height: 6px; accent-color: var(--accent); cursor: pointer; }
 
     /* --- Onboarding --- */
     #onboarding { position: fixed; inset: 0; z-index: 500; background: var(--bg-deep); display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .onboarding-box { text-align: center; width: 100%; max-width: 360px; }
-    .guide-item { 
-        display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.05); 
-        padding: 12px; border-radius: 16px; margin-bottom: 10px; text-align: left; font-size: 14px;
-    }
+    .btn-main { width: 100%; padding: 16px; border-radius: 18px; border: none; background: white; color: black; font-weight: 700; cursor: pointer; font-size: 16px; }
 
-    .btn-main { width: 100%; padding: 14px; border-radius: 16px; border: none; background: white; color: black; font-weight: 700; cursor: pointer; margin-top: 10px; transition: 0.2s; }
-    .btn-main:active { transform: scale(0.98); }
-
-    /* Mobile Specific Optimizations */
     @media (max-width: 600px) {
-        #toolbar { 
-            padding: 8px 10px;
-            bottom: 15px;
-            width: 95%;
-            gap: 8px;
-        }
-        .color-dot { width: 28px; height: 28px; }
-        .action-group { padding-left: 8px; gap: 6px; }
-        .icon-btn { width: 36px; height: 36px; }
-        .badge { padding: 6px 12px; top: 12px; left: 12px; }
+        .top-hud { top: 12px; padding: 0 12px; }
+        .settings-box { padding: 20px; }
+        .color-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .icon-btn { width: 40px; height: 40px; }
     }
   </style>
 </head>
@@ -132,40 +124,63 @@
 
   <div id="loading-screen">
     <h2 style="font-family: 'Outfit'; letter-spacing: 2px;">AIR DRAW</h2>
-    <p id="status-text" style="opacity: 0.5; font-size: 12px; margin-top: 10px;">Initializing AI Vision...</p>
     <div class="loader-bar"><div id="loader-fill" class="loader-fill"></div></div>
   </div>
 
   <div id="onboarding">
-    <div class="onboarding-box">
+    <div style="text-align: center; width: 100%; max-width: 360px;">
       <h2 style="font-family: 'Outfit'; font-size: 32px; margin-bottom: 24px;">Air Draw Ultra</h2>
-      <div class="guide-item"><span>☝️</span> <strong>Index Finger:</strong> Draw Neon Lines</div>
-      <div class="guide-item"><span>✋</span> <strong>Open Palm:</strong> Erase Elements</div>
-      <div class="guide-item"><span>✊</span> <strong>Closed Fist:</strong> Pause Drawing</div>
+      <div style="text-align: left; margin-bottom: 24px;">
+        <p style="margin-bottom: 10px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;">☝️ <strong>Point:</strong> Draw line</p>
+        <p style="margin-bottom: 10px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;">✋ <strong>Palm:</strong> Erase canvas</p>
+        <p style="margin-bottom: 10px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;">✊ <strong>Fist:</strong> Move hand freely</p>
+      </div>
       <button id="start-btn" class="btn-main">START CREATING</button>
     </div>
   </div>
 
+  <!-- Settings Modal (Includes Colors Now) -->
   <div id="settings-modal">
     <div class="settings-box">
-      <h3 style="margin-bottom: 20px; font-family: 'Outfit';">Canvas Settings</h3>
+      <h3>Settings</h3>
+      
+      <div class="setting-section-label">Select Color</div>
+      <div class="color-grid">
+        <div class="color-dot active" style="background: #00f0ff" data-color="#00f0ff"></div>
+        <div class="color-dot" style="background: #ff00e5" data-color="#ff00e5"></div>
+        <div class="color-dot" style="background: #39ff14" data-color="#39ff14"></div>
+        <div class="color-dot" style="background: #ffff00" data-color="#ffff00"></div>
+        <div class="color-dot" style="background: #ff2d6b" data-color="#ff2d6b"></div>
+        <div class="color-dot" style="background: #ffd700" data-color="#ffd700"></div>
+        <div class="color-dot" style="background: #ffffff" data-color="#ffffff"></div>
+        <div class="color-dot" style="background: #000000" data-color="#000000"></div>
+      </div>
+
+      <div class="setting-section-label">Brush Styling</div>
       <div class="setting-row">
         <div class="setting-label"><span>Thickness</span> <span id="val-thickness">6px</span></div>
-        <input type="range" id="input-thickness" min="2" max="30" value="6">
+        <input type="range" id="input-thickness" min="2" max="40" value="6">
       </div>
       <div class="setting-row">
-        <div class="setting-label"><span>Neon Intensity</span> <span id="val-glow">25px</span></div>
+        <div class="setting-label"><span>Neon Glow</span> <span id="val-glow">25px</span></div>
         <input type="range" id="input-glow" min="0" max="80" value="25">
       </div>
-      <button id="close-settings" class="btn-main" style="background: rgba(255,255,255,0.1); color: white;">Close</button>
+      
+      <button id="close-settings" class="btn-main" style="background: var(--accent); color: #000;">Save & Close</button>
     </div>
   </div>
 
   <div id="app">
-    <div id="hud">
+    <div class="top-hud">
       <div class="badge">
         <div id="status-dot" class="dot"></div>
         <span id="status-label" class="label">Ready</span>
+      </div>
+      
+      <div class="hud-controls">
+        <button class="icon-btn" id="open-settings" aria-label="Settings">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7m7.43-2.53c.04-.32.07-.64.07-.97s-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.488.488 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1s.03.66.07 1l-2.11 1.63c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.31.61.22l2.49-1c.52.39 1.06.73 1.69.98l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.25 1.17-.59 1.69-.98l2.49 1c.22.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.63Z"/></svg>
+        </button>
       </div>
     </div>
 
@@ -176,25 +191,10 @@
     </div>
 
     <div id="toolbar">
-      <div class="color-grid">
-        <div class="color-dot active" style="background: #00f0ff" data-color="#00f0ff" title="Cyan"></div>
-        <div class="color-dot" style="background: #ff00e5" data-color="#ff00e5" title="Magenta"></div>
-        <div class="color-dot" style="background: #39ff14" data-color="#39ff14" title="Lime"></div>
-        <div class="color-dot" style="background: #ffd700" data-color="#ffd700" title="Gold"></div>
-        <div class="color-dot" style="background: #ff2d6b" data-color="#ff2d6b" title="Rose"></div>
-        <div class="color-dot" style="background: #ffffff" data-color="#ffffff" title="White"></div>
-        <div class="color-dot" style="background: #000000" data-color="#000000" title="Black"></div>
-        <div class="color-dot" style="background: #ffff00" data-color="#ffff00" title="Yellow"></div>
-      </div>
-      
-      <div class="action-group">
-        <button class="icon-btn" id="open-settings" aria-label="Settings">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.488.488 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1s.03.66.07 1l-2.11 1.63c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.31.61.22l2.49-1c.52.39 1.06.73 1.69.98l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.25 1.17-.59 1.69-.98l2.49 1c.22.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.63Z"/></svg>
+        <button class="icon-btn" id="clear-btn" style="width: 120px; border-radius: 20px; gap: 8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4ZM6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12Z"/></svg>
+          <span style="font-size: 12px; font-weight: 700;">CLEAR</span>
         </button>
-        <button class="icon-btn" id="clear-btn" aria-label="Clear Canvas">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4ZM6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12Z"/></svg>
-        </button>
-      </div>
     </div>
   </div>
 
@@ -221,13 +221,9 @@
 
     async function init() {
       const fill = document.getElementById('loader-fill');
-      const status = document.getElementById('status-text');
-
       try {
-        fill.style.width = "30%";
+        fill.style.width = "40%";
         const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
-        
-        fill.style.width = "60%";
         state.landmarker = await HandLandmarker.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
@@ -237,13 +233,9 @@
           numHands: 1
         });
 
-        fill.style.width = "90%";
+        fill.style.width = "80%";
         const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-                facingMode: 'user', 
-                width: { ideal: 1280 }, 
-                height: { ideal: 720 } 
-            } 
+            video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } 
         });
         video.srcObject = stream;
 
@@ -254,20 +246,17 @@
             document.getElementById('loading-screen').style.opacity = '0';
             setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 600);
             document.getElementById('app').classList.add('visible');
-          }, 500);
+          }, 400);
           loop();
         };
-
       } catch (e) {
-        status.textContent = "Camera Error. Check permissions.";
-        status.style.color = "#ff4d4d";
+        console.error(e);
       }
     }
 
     function loop() {
       if (video.readyState >= 2) {
         const results = state.landmarker.detectForVideo(video, performance.now());
-        
         vCtx.clearRect(0, 0, vCanvas.width, vCanvas.height);
         vCtx.save();
         vCtx.scale(-1, 1);
@@ -277,19 +266,14 @@
 
         if (results.landmarks && results.landmarks[0]) {
           const hand = results.landmarks[0];
-          const gesture = analyze(hand);
-          const pos = {
-            x: (1 - hand[8].x) * dCanvas.width,
-            y: hand[8].y * dCanvas.height
-          };
-
-          handle(gesture, pos);
-          cursor(pos, gesture);
+          const g = analyze(hand);
+          const pos = { x: (1 - hand[8].x) * dCanvas.width, y: hand[8].y * dCanvas.height };
+          handle(g, pos);
+          cursor(pos, g);
         } else {
           state.isDrawing = false;
           updateHUD('IDLE');
         }
-        
         draw();
       }
       requestAnimationFrame(loop);
@@ -324,8 +308,7 @@
 
     function draw() {
       dCtx.clearRect(0, 0, dCanvas.width, dCanvas.height);
-      dCtx.lineCap = 'round';
-      dCtx.lineJoin = 'round';
+      dCtx.lineCap = 'round'; dCtx.lineJoin = 'round';
       state.strokes.forEach(s => {
         if (s.points.length < 2) return;
         dCtx.beginPath();
@@ -358,9 +341,9 @@
     }
 
     window.addEventListener('resize', () => {
-      const container = document.getElementById('canvas-container');
-      vCanvas.width = dCanvas.width = container.clientWidth;
-      vCanvas.height = dCanvas.height = container.clientHeight;
+      const c = document.getElementById('canvas-container');
+      vCanvas.width = dCanvas.width = c.clientWidth;
+      vCanvas.height = dCanvas.height = c.clientHeight;
     });
 
     document.getElementById('start-btn').onclick = () => document.getElementById('onboarding').style.display = 'none';
