@@ -15,6 +15,7 @@
       --border: rgba(255, 255, 255, 0.15);
       --accent: #00f0ff;
       --text: #ffffff;
+      --danger: #ff4d4d;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -44,7 +45,6 @@
     #canvas-container { position: relative; height: 100%; width: 100%; background: #000; overflow: hidden; }
     canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
     
-    /* Clear Visibility Camera */
     #video-canvas { opacity: 1.0; filter: contrast(1.05) brightness(1.05); }
     #webcam { display: none; }
 
@@ -62,7 +62,6 @@
     .dot.active { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
     .label { font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
 
-    /* Moving Settings to Top Right */
     .hud-controls { display: flex; gap: 8px; pointer-events: auto; }
     .icon-btn { 
       background: var(--glass); border: 1px solid var(--border); color: white; width: 44px; height: 44px; 
@@ -70,12 +69,6 @@
       backdrop-filter: blur(8px); transition: 0.2s;
     }
     .icon-btn:active { transform: scale(0.9); }
-
-    /* --- Bottom Action Bar --- */
-    #toolbar {
-      position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
-      display: flex; gap: 12px; z-index: 100; pointer-events: auto;
-    }
 
     /* --- Settings Modal --- */
     #settings-modal {
@@ -92,15 +85,16 @@
     }
     .settings-box h3 { margin-bottom: 24px; font-family: 'Outfit'; font-size: 22px; }
 
-    /* Color Grid inside Settings */
     .setting-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; color: var(--accent); font-weight: 700; }
+    
+    /* Color Grid */
     .color-grid { 
         display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; 
         background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px;
     }
     .color-dot { 
         width: 100%; aspect-ratio: 1; border-radius: 12px; border: 2px solid transparent; 
-        cursor: pointer; transition: 0.2s; box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+        cursor: pointer; transition: 0.2s;
     }
     .color-dot.active { border-color: white; transform: scale(1.1); box-shadow: 0 0 15px currentColor; }
     
@@ -108,14 +102,19 @@
     .setting-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 12px; opacity: 0.7; }
     input[type=range] { width: 100%; height: 6px; accent-color: var(--accent); cursor: pointer; }
 
+    /* Action Buttons in Modal */
+    .modal-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+    .btn-main { width: 100%; padding: 16px; border-radius: 18px; border: none; background: white; color: black; font-weight: 700; cursor: pointer; font-size: 15px; transition: 0.2s; }
+    .btn-main:active { transform: scale(0.98); }
+    .btn-danger { background: rgba(255, 77, 77, 0.15); color: var(--danger); border: 1px solid rgba(255, 77, 77, 0.3); }
+
     /* --- Onboarding --- */
     #onboarding { position: fixed; inset: 0; z-index: 500; background: var(--bg-deep); display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .btn-main { width: 100%; padding: 16px; border-radius: 18px; border: none; background: white; color: black; font-weight: 700; cursor: pointer; font-size: 16px; }
 
     @media (max-width: 600px) {
         .top-hud { top: 12px; padding: 0 12px; }
-        .settings-box { padding: 20px; }
-        .color-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .settings-box { padding: 24px 20px; border-radius: 28px; }
+        .color-grid { gap: 8px; padding: 10px; }
         .icon-btn { width: 40px; height: 40px; }
     }
   </style>
@@ -133,18 +132,18 @@
       <div style="text-align: left; margin-bottom: 24px;">
         <p style="margin-bottom: 10px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;">☝️ <strong>Point:</strong> Draw line</p>
         <p style="margin-bottom: 10px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;">✋ <strong>Palm:</strong> Erase canvas</p>
-        <p style="margin-bottom: 10px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;">✊ <strong>Fist:</strong> Move hand freely</p>
+        <p style="margin-bottom: 10px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;">✊ <strong>Fist:</strong> Move freely</p>
       </div>
       <button id="start-btn" class="btn-main">START CREATING</button>
     </div>
   </div>
 
-  <!-- Settings Modal (Includes Colors Now) -->
+  <!-- Settings Modal -->
   <div id="settings-modal">
     <div class="settings-box">
-      <h3>Settings</h3>
+      <h3>Control Center</h3>
       
-      <div class="setting-section-label">Select Color</div>
+      <div class="setting-section-label">Ink Color</div>
       <div class="color-grid">
         <div class="color-dot active" style="background: #00f0ff" data-color="#00f0ff"></div>
         <div class="color-dot" style="background: #ff00e5" data-color="#ff00e5"></div>
@@ -156,7 +155,7 @@
         <div class="color-dot" style="background: #000000" data-color="#000000"></div>
       </div>
 
-      <div class="setting-section-label">Brush Styling</div>
+      <div class="setting-section-label">Stroke Settings</div>
       <div class="setting-row">
         <div class="setting-label"><span>Thickness</span> <span id="val-thickness">6px</span></div>
         <input type="range" id="input-thickness" min="2" max="40" value="6">
@@ -166,7 +165,10 @@
         <input type="range" id="input-glow" min="0" max="80" value="25">
       </div>
       
-      <button id="close-settings" class="btn-main" style="background: var(--accent); color: #000;">Save & Close</button>
+      <div class="modal-actions">
+        <button id="clear-btn" class="btn-main btn-danger">Clear All Drawing</button>
+        <button id="close-settings" class="btn-main" style="background: var(--accent); color: #000;">Back to Canvas</button>
+      </div>
     </div>
   </div>
 
@@ -188,13 +190,6 @@
       <video id="webcam" autoplay playsinline></video>
       <canvas id="video-canvas"></canvas>
       <canvas id="draw-canvas"></canvas>
-    </div>
-
-    <div id="toolbar">
-        <button class="icon-btn" id="clear-btn" style="width: 120px; border-radius: 20px; gap: 8px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4ZM6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12Z"/></svg>
-          <span style="font-size: 12px; font-weight: 700;">CLEAR</span>
-        </button>
     </div>
   </div>
 
@@ -347,7 +342,13 @@
     });
 
     document.getElementById('start-btn').onclick = () => document.getElementById('onboarding').style.display = 'none';
-    document.getElementById('clear-btn').onclick = () => state.strokes = [];
+    
+    // Clear All now handled in settings
+    document.getElementById('clear-btn').onclick = () => {
+        state.strokes = [];
+        document.getElementById('settings-modal').classList.remove('open');
+    };
+
     document.getElementById('open-settings').onclick = () => document.getElementById('settings-modal').classList.add('open');
     document.getElementById('close-settings').onclick = () => document.getElementById('settings-modal').classList.remove('open');
     
