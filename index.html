@@ -2,23 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Air Draw Pro — AI Hand Tracking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Air Draw Ultra</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg-deep: #07070d;
-      --bg-surface: #0e0e1a;
-      --glass: rgba(10, 10, 14, 0.85);
-      --border: rgba(255, 255, 255, 0.1);
+      --bg-deep: #0a0a0f;
+      --bg-surface: #14141f;
+      --glass: rgba(20, 20, 30, 0.85);
+      --border: rgba(255, 255, 255, 0.15);
       --accent: #00f0ff;
-      --text: #e8e8f0;
-      --text-dim: rgba(232, 232, 240, 0.6);
+      --text: #ffffff;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body {
       background-color: var(--bg-deep);
       color: var(--text);
@@ -26,6 +25,7 @@
       overflow: hidden;
       height: 100vh;
       width: 100vw;
+      position: fixed; /* Prevent pull-to-refresh */
     }
 
     /* --- Loading --- */
@@ -33,118 +33,128 @@
       position: fixed; inset: 0; z-index: 1000;
       background: var(--bg-deep);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      transition: opacity 0.6s ease, visibility 0.6s;
+      transition: opacity 0.6s ease;
     }
-    .loader-bar { height: 4px; width: 280px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-top: 25px; overflow: hidden; }
-    .loader-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.4s ease; box-shadow: 0 0 15px var(--accent); }
+    .loader-bar { height: 4px; width: 200px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-top: 20px; overflow: hidden; }
+    .loader-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.3s; box-shadow: 0 0 10px var(--accent); }
 
     /* --- App Layout --- */
-    #app { position: relative; width: 100%; height: 100%; opacity: 0; transition: opacity 0.5s; }
+    #app { position: relative; width: 100%; height: 100%; opacity: 0; transition: opacity 0.5s; display: flex; flex-direction: column; }
     #app.visible { opacity: 1; }
-    #canvas-container { position: relative; height: 100%; width: 100%; background: #000; }
+    
+    #canvas-container { position: relative; flex-grow: 1; background: #000; overflow: hidden; }
     canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-    #video-canvas { opacity: 0.35; filter: grayscale(0.5) brightness(0.6); }
+    
+    /* NO MORE BLACK EFFECTS - Clear Visibility */
+    #video-canvas { 
+      opacity: 0.8; 
+      filter: brightness(1.1) contrast(1.1); 
+    }
     #webcam { display: none; }
 
-    /* --- Navigation HUD --- */
-    #hud { position: absolute; top: 24px; left: 24px; z-index: 100; pointer-events: none; }
-    .badge { background: var(--glass); border: 1px solid var(--border); padding: 10px 20px; border-radius: 15px; display: flex; align-items: center; gap: 12px; backdrop-filter: blur(10px); }
-    .dot { width: 10px; height: 10px; border-radius: 50%; background: #444; }
+    /* --- HUD --- */
+    #hud { position: absolute; top: 16px; left: 16px; z-index: 50; }
+    .badge { 
+        background: var(--glass); border: 1px solid var(--border); padding: 8px 16px; 
+        border-radius: 12px; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(8px);
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; }
     .dot.active { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-    .label { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; }
+    .label { font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
 
-    /* --- Floating Toolbar --- */
+    /* --- Responsive Toolbar --- */
     #toolbar {
-      position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
       background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border);
-      padding: 12px 20px; border-radius: 100px; display: flex; gap: 12px; align-items: center;
-      z-index: 100; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+      padding: 10px; border-radius: 24px; display: flex; flex-wrap: wrap; 
+      justify-content: center; gap: 8px; z-index: 100; width: 90%; max-width: 500px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
-    .color-dot { width: 32px; height: 32px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: 0.2s; }
-    .color-dot.active { border-color: white; transform: scale(1.1); box-shadow: 0 0 15px currentColor; }
+    .color-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+    .color-dot { 
+        width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent; 
+        cursor: pointer; transition: 0.2s; 
+    }
+    .color-dot.active { border-color: white; transform: scale(1.1); box-shadow: 0 0 12px currentColor; }
+    
+    .action-group { display: flex; gap: 8px; margin-left: 4px; border-left: 1px solid var(--border); padding-left: 12px; }
     .icon-btn { 
-      background: rgba(255,255,255,0.08); border: none; color: white; width: 38px; height: 38px; 
-      border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
+      background: rgba(255,255,255,0.1); border: none; color: white; width: 40px; height: 40px; 
+      border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer;
     }
-    .icon-btn:hover { background: rgba(255,255,255,0.15); }
-    .icon-btn svg { width: 18px; height: 18px; fill: currentColor; }
 
-    /* --- Settings Modal (Popup Box) --- */
+    /* --- Settings Modal --- */
     #settings-modal {
       position: fixed; inset: 0; z-index: 200;
-      background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
       display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none; transition: 0.3s;
+      opacity: 0; pointer-events: none; transition: 0.3s; padding: 20px;
     }
     #settings-modal.open { opacity: 1; pointer-events: auto; }
     .settings-box {
       background: var(--bg-surface); border: 1px solid var(--border);
-      padding: 30px; border-radius: 30px; width: 90%; max-width: 320px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+      padding: 24px; border-radius: 28px; width: 100%; max-width: 340px;
     }
-    .settings-box h3 { font-family: 'Outfit'; margin-bottom: 24px; font-size: 22px; text-align: center; }
     .setting-row { margin-bottom: 20px; }
-    .setting-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 10px; color: var(--text-dim); }
-    input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
-    .btn-close-settings { 
-      margin-top: 15px; width: 100%; padding: 12px; border-radius: 15px; border: none; 
-      background: rgba(255,255,255,0.05); color: white; font-weight: 600; cursor: pointer;
+    .setting-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 12px; opacity: 0.7; }
+    input[type=range] { width: 100%; height: 6px; accent-color: var(--accent); }
+
+    /* --- Onboarding --- */
+    #onboarding { position: fixed; inset: 0; z-index: 500; background: var(--bg-deep); display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .onboarding-box { text-align: center; width: 100%; max-width: 360px; }
+    .guide-item { 
+        display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.05); 
+        padding: 12px; border-radius: 16px; margin-bottom: 10px; text-align: left; font-size: 14px;
     }
 
-    /* --- Instructions Modal --- */
-    #onboarding { position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; }
-    .onboarding-box { text-align: center; max-width: 400px; padding: 40px; }
-    .onboarding-box h2 { font-family: 'Outfit'; font-size: 32px; margin-bottom: 20px; }
-    .guide-item { display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 18px; margin-bottom: 12px; text-align: left; }
-    .btn-start { width: 100%; padding: 16px; border-radius: 20px; border: none; background: white; color: black; font-weight: 800; cursor: pointer; font-size: 16px; margin-top: 15px; }
+    .btn-main { width: 100%; padding: 14px; border-radius: 16px; border: none; background: white; color: black; font-weight: 700; cursor: pointer; margin-top: 10px; }
 
-    .hidden { display: none !important; }
+    @media (max-width: 480px) {
+        #toolbar { border-radius: 20px; bottom: 15px; }
+        .color-dot { width: 28px; height: 28px; }
+        .action-group { padding-left: 8px; }
+        .icon-btn { width: 36px; height: 36px; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- Loading -->
   <div id="loading-screen">
-    <div style="text-align: center">
-      <h1 style="font-family: 'Outfit'; letter-spacing: 3px;">AIR DRAW PRO</h1>
-      <p id="status-text" style="opacity: 0.5; font-size: 13px; margin-top: 8px;">Syncing AI hand models...</p>
-      <div class="loader-bar"><div id="loader-fill" class="loader-fill"></div></div>
-    </div>
+    <h2 style="font-family: 'Outfit'; letter-spacing: 2px;">AIR DRAW</h2>
+    <p id="status-text" style="opacity: 0.5; font-size: 12px; margin-top: 10px;">Initializing AI Vision...</p>
+    <div class="loader-bar"><div id="loader-fill" class="loader-fill"></div></div>
   </div>
 
-  <!-- Onboarding -->
-  <div id="onboarding" class="hidden">
+  <div id="onboarding">
     <div class="onboarding-box">
-      <h2>Let's Draw!</h2>
-      <div class="guide-item"><span>☝️</span> <strong>Index up:</strong> Start drawing</div>
-      <div class="guide-item"><span>✋</span> <strong>Palm open:</strong> Sweep to erase</div>
-      <div class="guide-item"><span>✊</span> <strong>Fist closed:</strong> Move freely</div>
-      <button id="start-btn" class="btn-start">GO TO CANVAS</button>
+      <h2 style="font-family: 'Outfit'; font-size: 32px; margin-bottom: 24px;">Air Draw Ultra</h2>
+      <div class="guide-item"><span>☝️</span> <strong>Index Finger:</strong> Draw Neon Lines</div>
+      <div class="guide-item"><span>✋</span> <strong>Open Palm:</strong> Erase Elements</div>
+      <div class="guide-item"><span>✊</span> <strong>Closed Fist:</strong> Pause Drawing</div>
+      <button id="start-btn" class="btn-main">START CREATING</button>
     </div>
   </div>
 
-  <!-- Settings Popup -->
   <div id="settings-modal">
     <div class="settings-box">
-      <h3>Settings</h3>
+      <h3 style="margin-bottom: 20px; font-family: 'Outfit';">Canvas Settings</h3>
       <div class="setting-row">
-        <div class="setting-label"><span>Brush Thickness</span> <span id="val-thickness">6px</span></div>
-        <input type="range" id="input-thickness" min="1" max="25" value="6">
+        <div class="setting-label"><span>Thickness</span> <span id="val-thickness">6px</span></div>
+        <input type="range" id="input-thickness" min="2" max="30" value="6">
       </div>
       <div class="setting-row">
-        <div class="setting-label"><span>Neon Glow</span> <span id="val-glow">20px</span></div>
-        <input type="range" id="input-glow" min="0" max="60" value="20">
+        <div class="setting-label"><span>Neon Intensity</span> <span id="val-glow">25px</span></div>
+        <input type="range" id="input-glow" min="0" max="80" value="25">
       </div>
-      <button id="close-settings" class="btn-close-settings">Done</button>
+      <button id="close-settings" class="btn-main" style="background: rgba(255,255,255,0.1); color: white;">Close</button>
     </div>
   </div>
 
-  <!-- App -->
   <div id="app">
     <div id="hud">
       <div class="badge">
         <div id="status-dot" class="dot"></div>
-        <span id="status-label" class="label">READY</span>
+        <span id="status-label" class="label">Ready</span>
       </div>
     </div>
 
@@ -155,20 +165,24 @@
     </div>
 
     <div id="toolbar">
-      <div class="color-dot active" style="background: #00f0ff" data-color="#00f0ff"></div>
-      <div class="color-dot" style="background: #ff00e5" data-color="#ff00e5"></div>
-      <div class="color-dot" style="background: #39ff14" data-color="#39ff14"></div>
-      <div class="color-dot" style="background: #ffffff" data-color="#ffffff"></div>
+      <div class="color-grid">
+        <div class="color-dot active" style="background: #00f0ff" data-color="#00f0ff"></div>
+        <div class="color-dot" style="background: #000000" data-color="#ff00e5"></div>
+        <div class="color-dot" style="background: #39ff14" data-color="#39ff14"></div>
+        <div class="color-dot" style="background: #ffd700" data-color="#ffd700"></div>
+        <div class="color-dot" style="background: #ff2d6b" data-color="#ff2d6b"></div>
+        <div class="color-dot" style="background: #b400ff" data-color="#b400ff"></div>
+        <div class="color-dot" style="background: #ffffff" data-color="#ffffff"></div>
+      </div>
       
-      <div style="width: 1px; height: 24px; background: rgba(255,255,255,0.1); margin: 0 4px;"></div>
-      
-      <button class="icon-btn" id="open-settings" title="Settings">
-        <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5A3.5 3.5 0 0 1 15.5 12A3.5 3.5 0 0 1 12 15.5M19.43 12.97c.04-.32.07-.65.07-.97c0-.32-.03-.65-.07-.97l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.12.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.97c0 .32.03.65.07.97l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.31.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.22.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65Z"/></svg>
-      </button>
-      
-      <button class="icon-btn" id="clear-btn" title="Clear Canvas">
-        <svg viewBox="0 0 24 24"><path d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12Z"/></svg>
-      </button>
+      <div class="action-group">
+        <button class="icon-btn" id="open-settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.488.488 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1s.03.66.07 1l-2.11 1.63c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.31.61.22l2.49-1c.52.39 1.06.73 1.69.98l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.25 1.17-.59 1.69-.98l2.49 1c.22.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.63Z"/></svg>
+        </button>
+        <button class="icon-btn" id="clear-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4ZM6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12Z"/></svg>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -179,9 +193,9 @@
 
     const state = {
       landmarker: null,
-      activeColor: '#00f0ff',
+      color: '#00f0ff',
       thickness: 6,
-      glow: 20,
+      glow: 25,
       isDrawing: false,
       strokes: [],
       currentStroke: null
@@ -198,11 +212,10 @@
       const status = document.getElementById('status-text');
 
       try {
-        fill.style.width = "20%";
+        fill.style.width = "30%";
         const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
         
-        fill.style.width = "50%";
-        status.textContent = "Loading AI Hand Tracking...";
+        fill.style.width = "60%";
         state.landmarker = await HandLandmarker.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
@@ -212,9 +225,14 @@
           numHands: 1
         });
 
-        fill.style.width = "80%";
-        status.textContent = "Connecting Camera...";
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } });
+        fill.style.width = "90%";
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: 'user', 
+                width: { ideal: 1280 }, 
+                height: { ideal: 720 } 
+            } 
+        });
         video.srcObject = stream;
 
         video.onloadeddata = () => {
@@ -222,15 +240,14 @@
           window.dispatchEvent(new Event('resize'));
           setTimeout(() => {
             document.getElementById('loading-screen').style.opacity = '0';
-            document.getElementById('loading-screen').style.visibility = 'hidden';
-            document.getElementById('onboarding').classList.remove('hidden');
+            setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 600);
             document.getElementById('app').classList.add('visible');
           }, 500);
           loop();
         };
 
       } catch (e) {
-        status.textContent = "Camera access denied.";
+        status.textContent = "Camera Error. Check permissions.";
         status.style.color = "#ff4d4d";
       }
     }
@@ -248,62 +265,55 @@
 
         if (results.landmarks && results.landmarks[0]) {
           const hand = results.landmarks[0];
-          const gesture = analyzeHand(hand);
+          const gesture = analyze(hand);
           const pos = {
             x: (1 - hand[8].x) * dCanvas.width,
             y: hand[8].y * dCanvas.height
           };
 
-          handleInput(gesture, pos);
-          drawCursor(pos, gesture);
+          handle(gesture, pos);
+          cursor(pos, gesture);
         } else {
           state.isDrawing = false;
           updateHUD('IDLE');
         }
         
-        renderStrokes();
+        draw();
       }
       requestAnimationFrame(loop);
     }
 
-    function analyzeHand(lm) {
-      const indexUp = lm[8].y < lm[6].y;
-      const middleUp = lm[12].y < lm[10].y;
-      const ringUp = lm[16].y < lm[14].y;
-
-      if (indexUp && !middleUp) return 'DRAWING';
-      if (indexUp && middleUp && ringUp) return 'ERASING';
+    function analyze(lm) {
+      const iUp = lm[8].y < lm[6].y;
+      const mUp = lm[12].y < lm[10].y;
+      const rUp = lm[16].y < lm[14].y;
+      if (iUp && !mUp) return 'DRAWING';
+      if (iUp && mUp && rUp) return 'ERASING';
       return 'IDLE';
     }
 
-    function handleInput(gesture, pos) {
-      updateHUD(gesture);
-
-      if (gesture === 'DRAWING') {
+    function handle(g, pos) {
+      updateHUD(g);
+      if (g === 'DRAWING') {
         if (!state.isDrawing) {
-          state.currentStroke = { 
-            color: state.activeColor, 
-            thickness: state.thickness, 
-            glow: state.glow,
-            points: [] 
-          };
+          state.currentStroke = { color: state.color, thickness: state.thickness, glow: state.glow, points: [] };
           state.strokes.push(state.currentStroke);
           state.isDrawing = true;
         }
         state.currentStroke.points.push(pos);
-      } else if (gesture === 'ERASING') {
+      } else if (g === 'ERASING') {
         state.isDrawing = false;
-        performErase(pos);
+        const rad = 60;
+        state.strokes = state.strokes.filter(s => !s.points.some(p => Math.hypot(p.x-pos.x, p.y-pos.y) < rad));
       } else {
         state.isDrawing = false;
       }
     }
 
-    function renderStrokes() {
+    function draw() {
       dCtx.clearRect(0, 0, dCanvas.width, dCanvas.height);
       dCtx.lineCap = 'round';
       dCtx.lineJoin = 'round';
-
       state.strokes.forEach(s => {
         if (s.points.length < 2) return;
         dCtx.beginPath();
@@ -311,52 +321,28 @@
         dCtx.lineWidth = s.thickness;
         dCtx.shadowBlur = s.glow;
         dCtx.shadowColor = s.color;
-        
         dCtx.moveTo(s.points[0].x, s.points[0].y);
-        for (let i = 1; i < s.points.length; i++) {
-          dCtx.lineTo(s.points[i].x, s.points[i].y);
-        }
+        for (let i = 1; i < s.points.length; i++) dCtx.lineTo(s.points[i].x, s.points[i].y);
         dCtx.stroke();
       });
     }
 
-    function performErase(pos) {
-      const radius = 50;
-      state.strokes = state.strokes.filter(stroke => {
-        return !stroke.points.some(p => {
-          const dx = p.x - pos.x;
-          const dy = p.y - pos.y;
-          return Math.sqrt(dx*dx + dy*dy) < radius;
-        });
-      });
-    }
-
-    function drawCursor(pos, gesture) {
+    function cursor(pos, g) {
       vCtx.beginPath();
-      vCtx.arc(pos.x, pos.y, gesture === 'ERASING' ? 40 : 10, 0, Math.PI * 2);
-      vCtx.fillStyle = gesture === 'ERASING' ? 'rgba(255,50,50,0.3)' : state.activeColor;
-      if (gesture !== 'ERASING') {
-        vCtx.shadowBlur = 15;
-        vCtx.shadowColor = state.activeColor;
-      }
+      vCtx.arc(pos.x, pos.y, g === 'ERASING' ? 40 : 10, 0, Math.PI * 2);
+      vCtx.fillStyle = g === 'ERASING' ? 'rgba(255,50,50,0.3)' : state.color;
+      if (g !== 'ERASING') { vCtx.shadowBlur = 15; vCtx.shadowColor = state.color; }
       vCtx.fill();
     }
 
-    function updateHUD(gesture) {
+    function updateHUD(g) {
       const dot = document.getElementById('status-dot');
       const label = document.getElementById('status-label');
-      label.textContent = gesture;
-      
-      if (gesture === 'DRAWING') {
-        dot.className = 'dot active';
-        dot.style.background = state.activeColor;
-      } else if (gesture === 'ERASING') {
-        dot.className = 'dot active';
-        dot.style.background = '#ff4d4d';
-      } else {
-        dot.className = 'dot';
-        dot.style.background = '#444';
-      }
+      label.textContent = g;
+      dot.className = g === 'IDLE' ? 'dot' : 'dot active';
+      if (g === 'DRAWING') dot.style.background = state.color;
+      else if (g === 'ERASING') dot.style.background = '#ff4d4d';
+      else dot.style.background = '#444';
     }
 
     window.addEventListener('resize', () => {
@@ -365,36 +351,25 @@
       vCanvas.height = dCanvas.height = container.clientHeight;
     });
 
-    // Event Handlers
-    document.getElementById('start-btn').onclick = () => document.getElementById('onboarding').classList.add('hidden');
+    document.getElementById('start-btn').onclick = () => document.getElementById('onboarding').style.display = 'none';
     document.getElementById('clear-btn').onclick = () => state.strokes = [];
+    document.getElementById('open-settings').onclick = () => document.getElementById('settings-modal').classList.add('open');
+    document.getElementById('close-settings').onclick = () => document.getElementById('settings-modal').classList.remove('open');
     
-    // Settings Modal Handlers
-    const settingsModal = document.getElementById('settings-modal');
-    document.getElementById('open-settings').onclick = () => settingsModal.classList.add('open');
-    document.getElementById('close-settings').onclick = () => settingsModal.classList.remove('open');
-    settingsModal.onclick = (e) => { if (e.target === settingsModal) settingsModal.classList.remove('open'); };
-
-    // Range Inputs
-    const thickIn = document.getElementById('input-thickness');
-    const thickVal = document.getElementById('val-thickness');
-    thickIn.oninput = () => {
-      state.thickness = parseInt(thickIn.value);
-      thickVal.textContent = state.thickness + 'px';
+    document.getElementById('input-thickness').oninput = (e) => {
+      state.thickness = parseInt(e.target.value);
+      document.getElementById('val-thickness').textContent = state.thickness + 'px';
     };
-
-    const glowIn = document.getElementById('input-glow');
-    const glowVal = document.getElementById('val-glow');
-    glowIn.oninput = () => {
-      state.glow = parseInt(glowIn.value);
-      glowVal.textContent = state.glow + 'px';
+    document.getElementById('input-glow').oninput = (e) => {
+      state.glow = parseInt(e.target.value);
+      document.getElementById('val-glow').textContent = state.glow + 'px';
     };
 
     document.querySelectorAll('.color-dot').forEach(dot => {
       dot.onclick = () => {
         document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
         dot.classList.add('active');
-        state.activeColor = dot.dataset.color;
+        state.color = dot.dataset.color;
       };
     });
 
